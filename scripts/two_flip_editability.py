@@ -4,9 +4,12 @@
 Each bench case keeps its flipped token s and pairs it with a token t of the opposite color, so
 each color's count is preserved; the first t whose two-token board is reachable (legal) and the
 first that is unreachable (illegal) are kept, decided exactly (pim.environments.othello.reachability).
-PI, GS and IM then edit the single flip and both pairs -> runs/<run>/two_flip_editability.json.
+Cases are tried in order until --n have both partners (a case without both is dropped, with the
+reason recorded); --pool extends the bench with further cases built the same way. PI, GS and IM
+then edit the single flip and both pairs -> runs/<run>/two_flip_editability.json.
 
-    python scripts/two_flip_editability.py --run othello/adjacent-noflip [--no-legal]
+    python scripts/make_othello_edits.py --instance adjacent-noflip --n 3000
+    python scripts/two_flip_editability.py --run othello/adjacent-noflip --pool 3000 [--no-legal]
 """
 from __future__ import annotations
 
@@ -62,26 +65,31 @@ def _case_pairs(args: tuple) -> dict | None:
             illegal = {"t": t}
         if require_legal and legal and illegal:
             break
-    if illegal and (legal or not require_legal):
-        return {"case": i, "s": s, "legal": legal, "illegal": illegal, "partners_searched": counts}
-    return None
+    kept = bool(illegal and (legal or not require_legal))
+    why = None if kept else ("no unreachable partner" if not illegal else "no reachable partner")
+    if not kept and not legal and counts["undecided"]:
+        why += " (some searches undecided)"
+    return {"case": i, "s": s, "legal": legal, "illegal": illegal, "partners_searched": counts,
+            "kept": kept, "dropped_because": why}
 
 
 def find_pairs(cases: list[dict], rules: dict, n: int, budget: int, require_legal: bool = True,
-               workers: int = 1) -> list[dict]:
-    """The first ``n`` qualifying bench cases, in bench order (the pool returns the serial result)."""
+               workers: int = 1) -> tuple[list[dict], list[dict]]:
+    """The first ``n`` qualifying bench cases, and every case tried with the reason a dropped one was
+    dropped, in bench order (the pool returns the serial result)."""
     from multiprocessing import Pool
 
     args = [(i, c, rules, budget, require_legal) for i, c in enumerate(cases)]
-    out = []
-    with Pool(workers) as pool:
+    out, tried = [], []
+    with Pool(workers, maxtasksperchild=8) as pool:
         for r in pool.imap(_case_pairs, args, chunksize=1):
-            if r is not None:
+            tried.append(r)
+            if r["kept"]:
                 out.append(r)
                 if len(out) >= n:
                     pool.terminate()
                     break
-    return out
+    return out, tried
 
 
 def _grid(arms: list[dict], editor: str) -> tuple[list[float], list[int]]:
@@ -105,11 +113,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", default="othello/adjacent-noflip", help="Othello run id")
-    ap.add_argument("--n", type=int, default=40, help="cases (one single flip, one legal and one illegal pair each)")
+    ap.add_argument("--n", type=int, default=1000,
+                    help="cases to keep (each gives one single flip, one legal and one illegal pair); the default tries the whole bench")
     ap.add_argument("--budget", type=int, default=2_000_000, help="search nodes per partner before it is skipped")
     ap.add_argument("--no-legal", action="store_true",
                     help="variant without legal pairs: search every partner, keep single flip and illegal pair")
     ap.add_argument("--workers", type=int, default=16, help="processes for the pair search")
+    ap.add_argument("--pool", type=int, default=1000,
+                    help="cases to draw from: the 1000-case bench, or a larger set made by "
+                         "scripts/make_othello_edits.py --n <pool> (same recipe and seed, so it begins with the bench)")
     a = ap.parse_args()
     groups = ("single", "illegal") if a.no_legal else GROUPS
     two = [g for g in groups if g != "single"]
@@ -119,9 +131,20 @@ def main() -> None:
     inst = S["instance"]
     rules = oc.rules_of(inst)
     cases = pickle.load(open(cases_path(inst), "rb"))
-    pairs = find_pairs(cases, rules, a.n, a.budget, require_legal=not a.no_legal, workers=a.workers)
+    if a.pool != len(cases):
+        from pim.environments.layout import othello_cases_file
+
+        pool = pickle.load(open(othello_cases_file(inst, a.pool), "rb"))
+        assert len(pool) == a.pool and all(x["history"] == y["history"] and x["pos_int"] == y["pos_int"]
+                                           for x, y in zip(cases, pool)), "the pool does not begin with the bench"
+        cases = pool
+    pairs, tried = find_pairs(cases, rules, a.n, a.budget, require_legal=not a.no_legal, workers=a.workers)
+    dropped = {}
+    for r in tried:
+        if not r["kept"]:
+            dropped[r["dropped_because"]] = dropped.get(r["dropped_because"], 0) + 1
     searched = {k: sum(p_["partners_searched"][k] for p_ in pairs) for k in ("reachable", "unreachable", "undecided")}
-    print(f"{len(pairs)} cases kept, from the first {pairs[-1]['case'] + 1} bench cases; partners searched "
+    print(f"{len(pairs)} cases kept, from the first {pairs[-1]['case'] + 1} cases; partners searched "
           f"{searched} [{(time.time() - t0) / 60:.1f} min]", flush=True)
     if a.no_legal and searched["reachable"]:
         print(f"  WARNING: --no-legal, but {searched['reachable']} reachable pairs exist on this variant", flush=True)
@@ -257,7 +280,7 @@ def main() -> None:
              for g in groups}
 
     out = {"run": a.run, "instance": inst, "groups_run": list(groups), "partners_searched": searched,
-           "version": VERSION, "n_cases": n, "budget": a.budget,
+           "version": VERSION, "n_cases": n, "case_pool": len(cases), "cases_tried": len(tried), "cases_dropped": dropped, "budget": a.budget,
            "editor": "IM (canonical inverse_arms, post_boards)",
            "reported": reported, "at_table2_setting": at_t2,
            "table2_setting": {ed: {"point": int(t2[ed]["point"]), "alpha": float(t2[ed]["alpha"])}

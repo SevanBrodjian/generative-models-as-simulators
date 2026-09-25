@@ -714,7 +714,7 @@ def table_legal_illegal(runs: list[str]) -> Table:
 
 
 def table_two_flip(runs: list[str]) -> Table:
-    """tab:two_flip: edits that flip two tiles of opposite color, split by whether a legal game reaches the
+    """tab:two_flip: edits that flip two tokens of opposite color, split by whether a legal game reaches the
     result; each editor at the arm the paper's rule picks within the group."""
     rows = []
     for run in runs:
@@ -730,7 +730,7 @@ def table_two_flip(runs: list[str]) -> Table:
                 v[f"{ed} fid"] = fidelity(a["fidelity_ratio"]) if a else np.nan
                 v[f"{ed} SE"] = a["index_se"] if a else np.nan
             rows.append((variant(run), target, v))
-    return _table("tab:two_flip", "Two-tile edits", _frame(rows), LEGAL_COLS)
+    return _table("tab:two_flip", "Two-token edits", _frame(rows), LEGAL_COLS)
 
 
 def two_flip_numbers(runs: list[str]) -> pd.DataFrame:

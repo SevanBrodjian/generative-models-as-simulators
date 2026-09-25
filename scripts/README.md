@@ -98,8 +98,11 @@ python scripts/score_prediction.py
 ```bash
 python scripts/bayes_floor.py
 python scripts/reachability_table.py
-python scripts/two_flip_editability.py --run othello/adjacent-noflip
-python scripts/two_flip_editability.py --run othello/standard
+for I in standard adjacent-noflip; do python scripts/make_othello_edits.py --instance $I --n 3000; done
+python scripts/make_othello_edits.py --instance adjacent-flip --n 8000
+python scripts/two_flip_editability.py --run othello/standard --pool 3000
+python scripts/two_flip_editability.py --run othello/adjacent-flip --pool 8000
+python scripts/two_flip_editability.py --run othello/adjacent-noflip --pool 3000
 python scripts/two_flip_editability.py --run othello/standard-noflip --no-legal
 python scripts/im_reconstruction.py
 python scripts/othello_flip_rates.py
