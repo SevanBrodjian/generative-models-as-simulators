@@ -35,7 +35,7 @@ need a CUDA GPU.
 The trained models, fitted probes, scores and datasets are on
 [Hugging Face](https://huggingface.co/datasets/AnonymousCompute/generative-models-as-simulators).
 Download them into the repository root, where they fill `runs/` and `datasets/`. The core bundle
-(2.9 GB) is all the tables and figures need.
+(3.2 GB) is all the tables and figures need.
 
 ```bash
 pip install -U huggingface_hub
@@ -44,7 +44,7 @@ hf download AnonymousCompute/generative-models-as-simulators --repo-type dataset
     --exclude "runs/*/*__seed*/best_model.pt" --exclude "runs/*/*__seed*/probes/*"
 ```
 
-Drop the last three `--exclude` flags to also fetch the probe corpora (9.4 GB) and the seed
+Drop the last three `--exclude` flags to also fetch the probe corpora (10 GB) and the seed
 replicates' weights and probes (3.5 GB), which rescoring needs.
 
 ## Reproduce the paper
@@ -81,7 +81,7 @@ the full pipeline in order, with a toy-size quick check.
 | Environment | Run ids |
 |---|---|
 | Othello | `othello/standard`, `othello/adjacent-flip`, `othello/adjacent-noflip`, `othello/standard-noflip` |
-| Rayworld | `rayworld/standard`, `rayworld/blink`, `rayworld/128-ray`, `rayworld/16-ray`, `rayworld/8-ray`, `rayworld/5-ray`, `rayworld/smooth`, `rayworld/obs5`, `rayworld/8-ray-tokens` |
+| Rayworld | `rayworld/standard`, `rayworld/blink`, `rayworld/128-ray`, `rayworld/16-ray`, `rayworld/8-ray`, `rayworld/5-ray`, `rayworld/smooth`, `rayworld/obs5`, `rayworld/pair`, `rayworld/8-ray-tokens` |
 
 Each run lives in `runs/<run id>/`. The ten main-table variants also have seed replicates in
 `runs/<run id>__seed{0,1,2}/`.

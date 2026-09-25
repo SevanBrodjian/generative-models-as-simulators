@@ -77,6 +77,8 @@ def _parser() -> argparse.ArgumentParser:
     g.add_argument("--n-observers", type=int, default=1, help="observers on a ring")
     g.add_argument("--region", choices=["frustum", "circle"], default="frustum",
                    help="arena of the discs")
+    g.add_argument("--pair-separation", type=float, default=None,
+                   help="two discs as a rigid pair at this center distance (open boundary only)")
 
     g = p.add_argument_group("edits")
     g.add_argument("--edit-frame", type=int, default=-1, help="frame of the edit (-1: frames // 2)")
@@ -121,7 +123,7 @@ def _sim(a) -> SimConfig:
                      always_in_frustum=a.always_in_frustum, blink_prob=a.blink_prob,
                      blink_mean=a.blink_mean, blink_max=a.blink_max, blink_warmup=a.blink_warmup,
                      soft_shading=a.soft_shading, soft_profile_power=a.soft_profile_power,
-                     n_observers=a.n_observers, region=a.region)
+                     n_observers=a.n_observers, region=a.region, pair_separation=a.pair_separation)
 
 
 def _storage(a) -> dict:

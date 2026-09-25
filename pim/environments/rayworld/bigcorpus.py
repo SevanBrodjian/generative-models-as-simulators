@@ -40,6 +40,7 @@ _RAYS_128R = ["--obs-res", "130", "--drop-edge-rays", "--radius", "1.0", "--max-
 _BLINK = ["--blink-prob", "0.05", "--blink-mean", "7", "--blink-max", "12", "--blink-warmup", "3"]
 _SMOOTH = ["--soft-shading", "power", "--soft-profile-power", "2.0"]
 _OBS5 = ["--n-observers", "5", "--region", "circle"]
+_PAIR = ["--pair-separation", "2.0"]
 
 # ── the instance registry ─────────────────────────────────────────────────────
 
@@ -64,6 +65,9 @@ INSTANCES = {
     # 8-ray seen by five observers around a circular arena (observers.py): 5 x 8 rays
     "obs5": {"base_seed": 230_000_000_000, "obs_dim": 40,
              "sim_flags": _COMMON_FLAGS + _RAYS_8 + _NO_NOISE + _OBS5},
+    # standard with the two discs as a rigid pair at center distance 2.0, same velocity (sim.py)
+    "pair": {"base_seed": 300_000_000_000, "obs_dim": 128,
+             "sim_flags": _COMMON_FLAGS + _RAYS_128 + _NO_NOISE + _PAIR},
 }
 
 # seed range [lo, hi) of every split of every instance ("eval suite": the eval and edits splits)
@@ -85,7 +89,12 @@ SEED_RANGES = {
                "probe": (1080 * _B, 1081 * _B), "probe_large": (1090 * _B, 1091 * _B)},
     "128-ray": {"train": (300 * _B, 320 * _B), "eval suite": (325 * _B, 325_400_000_000),
                 "probe": (1100 * _B, 1101 * _B), "probe_large": (1110 * _B, 1111 * _B)},
+    "pair": {"train": (300 * _B, 320 * _B), "eval suite": (325 * _B, 325_400_000_000),
+             "probe": (1100 * _B, 1101 * _B), "probe_large": (1110 * _B, 1111 * _B)},
 }
+# pair was generated on the same seed blocks as 128-ray. The two worlds differ (disc radius, ray
+# count and the pair rule), and every split stays disjoint from the other splits of its own instance.
+SHARED_SEEDS = {"pair": "128-ray", "128-ray": "pair"}
 # seed ranges of data outside this release; every corpus is still checked against them
 RESERVED = [(0, 120_000), (3_000_000, 3_950_000), (10_000_000, 19_800_000_000),
             (900 * _B, 901 * _B), (960 * _B, 961 * _B)]
@@ -95,6 +104,8 @@ def forbidden(inst: str) -> list[tuple[int, int, str]]:
     """Every seed range an instance's training corpus must avoid: all other splits."""
     out = [(lo, hi, "reserved") for lo, hi in RESERVED]
     for name, splits in SEED_RANGES.items():
+        if name == SHARED_SEEDS.get(inst):
+            continue
         for split, (lo, hi) in splits.items():
             if not (name == inst and split == "train"):
                 out.append((lo, hi, f"{name} {split}"))

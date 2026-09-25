@@ -7,8 +7,8 @@ takes `--help`.
 ## From scratch
 
 The training datasets are not shipped, and the scripts regenerate every dataset from its recorded
-seeds. The eight Rayworld training corpora take about 2.1 TB, about 440 GB for each 128-ray instance
-(`standard`, `blink`, `smooth` and `128-ray`). Scoring and probe fits memory-map residual stacks of up
+seeds. The nine Rayworld training corpora take about 2.6 TB, about 440 GB for each 128-ray instance
+(`standard`, `blink`, `smooth`, `pair` and `128-ray`). Scoring and probe fits memory-map residual stacks of up
 to about 22 GB into `.scratch/`. Training on a GPU is not bitwise deterministic, so a retrained model
 matches the shipped one statistically rather than exactly. The steps run in order.
 
@@ -16,7 +16,7 @@ matches the shipped one statistically rather than exactly. The steps run in orde
 selections, which filter on its vocabulary.
 
 ```bash
-for I in standard blink smooth obs5 128-ray 16-ray 8-ray 5-ray
+for I in standard blink smooth obs5 pair 128-ray 16-ray 8-ray 5-ray
 do
     python scripts/build_rayworld_corpus.py --instance $I
     python scripts/generate_dataset.py --instance $I --role eval
@@ -25,7 +25,7 @@ do
     python scripts/generate_dataset.py --instance $I --role probe --size 250k
 done
 python scripts/make_rayworld_tokens.py --instance 8-ray
-for I in standard blink smooth obs5 128-ray 16-ray 8-ray 5-ray
+for I in standard blink smooth obs5 pair 128-ray 16-ray 8-ray 5-ray
 do
     python scripts/make_edit_selection.py --instance $I
 done
@@ -42,7 +42,7 @@ Seeds 1 and 2 are their best checkpoint within 512,000 steps, and seed 0 is the 
 checkpoint at exactly 512,000 steps.
 
 ```bash
-for I in standard blink smooth obs5 128-ray 16-ray 8-ray 5-ray
+for I in standard blink smooth obs5 pair 128-ray 16-ray 8-ray 5-ray
 do
     python scripts/train.py --env rayworld --instance $I --run rayworld/$I --steps 780000
 done
@@ -142,7 +142,7 @@ Delete the run's `scores.json` (and its `probes/` to refit them) and run `master
 with the corpora bundle in place. A Rayworld run whose `probes/` you delete needs its step-3
 `fit_probes.py` lines first. The corpora bundle holds the 250k Rayworld probe corpus only for 128-ray,
 16-ray, 8-ray and 5-ray, so refitting the categorical probes of `standard` and `blink`, or the large
-observation floors of `standard`, `blink`, `smooth` and `obs5`, first needs
+observation floors of `standard`, `blink`, `smooth`, `obs5` and `pair`, first needs
 `python scripts/generate_dataset.py --instance <instance> --role probe --size 250k`. Afterwards,
 `scripts/score_prediction.py --runs <run id>` adds back the prediction block, and the three
 qualitative figure scripts need `--recompute`. Refitting an Othello floor caches the probe labels

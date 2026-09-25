@@ -67,6 +67,9 @@ class SimConfig:
 
     # several observers on a ring, and the circular arena (observers.py; open boundary only)
     n_observers: int = 1
+    # two objects as a rigid pair: object 1 at this center distance from object 0 (random
+    # orientation) with the same velocity; open boundary only
+    pair_separation: float | None = None
     region: Literal["frustum", "circle"] = "frustum"
 
     # a top-down raster observation; not implemented here, kept so stored configs rebuild

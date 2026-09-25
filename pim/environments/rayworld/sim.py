@@ -126,6 +126,15 @@ def simulate(cfg: SimConfig) -> Scene:
     n = cfg.n_objects
     if n is None:
         n = int(rng.integers(cfg.n_objects_min, cfg.n_objects_max + 1))
+    pair = getattr(cfg, "pair_separation", None)
+    if pair is not None:
+        if n != 2:
+            raise ValueError("pair_separation needs exactly two objects")
+        if cfg.boundary != "open":
+            raise ValueError('pair_separation needs boundary="open" (a wall bounce would break the pair)')
+        if pair < cfg.collision_margin * 2.0 * cfg.radius:
+            raise ValueError(f"pair_separation {pair} is below the collision spacing "
+                             f"{cfg.collision_margin * 2.0 * cfg.radius}; every draw would be rejected")
 
     if cfg.fixed_reflectivities:
         reflectivities = np.linspace(cfg.refl_min, cfg.refl_max, n)
@@ -141,6 +150,12 @@ def simulate(cfg: SimConfig) -> Scene:
         vels = np.zeros((n, 2))
 
         for i in range(n):
+            if pair is not None and i == 1:
+                # rigid pair: object 1 at the fixed separation from object 0, same velocity
+                theta = rng.uniform(0.0, 2.0 * np.pi)
+                positions[0, 1] = positions[0, 0] + pair * np.array([np.cos(theta), np.sin(theta)])
+                vels[1] = vels[0]
+                continue
             positions[0, i] = sample_position(rng, cfg, cfg.radius)
 
             speed = rng.uniform(cfg.speed_min, cfg.speed_max)

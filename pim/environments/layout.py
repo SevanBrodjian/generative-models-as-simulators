@@ -14,7 +14,7 @@ BASELINES = REPO / "runs" / "_baselines"
 CLASSES = ("rayworld", "othello")
 # the shipped instances; the path helpers accept any name
 INSTANCES = {
-    "rayworld": ("standard", "blink", "128-ray", "16-ray", "8-ray", "5-ray", "smooth", "obs5"),
+    "rayworld": ("standard", "blink", "128-ray", "16-ray", "8-ray", "5-ray", "smooth", "obs5", "pair"),
     "othello": ("standard", "adjacent-flip", "adjacent-noflip", "standard-noflip"),
 }
 DEFAULT_INSTANCE = {"rayworld": "standard", "othello": "standard"}
