@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "generative-models-as-simulators"
+version = "1.0"
+description = "Code for the paper When Generative Models Act as Simulators."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "pim/environments/othello/vendor/LICENSE"]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "torch",
+    "h5py",
+    "matplotlib",
+    "pandas",
+    "tqdm",
+    "jupyter",
+    "nbconvert",
+    "ipykernel",
+]
+
+[tool.setuptools.packages.find]
+include = ["pim*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F"]
+ignore = ["E501"]

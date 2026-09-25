@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+.ruff_cache/
+
+# notebooks
+.ipynb_checkpoints/
+*.executed.ipynb
+
+# outputs and temporary memory maps
+outputs/
+.scratch/
+
+# models and data: downloaded or regenerated, never committed
+runs/*
+!runs/.gitkeep
+datasets/*
+!datasets/.gitkeep
+
+# written beside runs/ and datasets/ by the artifact download
+/MANIFEST.json
+/SHA256SUMS
+/.cache/
